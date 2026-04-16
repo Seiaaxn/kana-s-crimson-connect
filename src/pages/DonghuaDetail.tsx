@@ -4,13 +4,15 @@ import { getDonghuaDetail } from '@/lib/api';
 import { FavoriteButton } from '@/components/FavoriteButton';
 import { BottomNav } from '@/components/BottomNav';
 import type { DonghuaDetail } from '@/lib/types';
-import { Loader2, ArrowLeft, Play } from 'lucide-react';
+import { Loader2, ArrowLeft, Play, Star, Tv, Clock, Building2, Globe } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export default function DonghuaDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const [detail, setDetail] = useState<DonghuaDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAllEps, setShowAllEps] = useState(false);
+  const [showFullSynopsis, setShowFullSynopsis] = useState(false);
 
   useEffect(() => {
     if (!slug) return;
@@ -25,52 +27,100 @@ export default function DonghuaDetailPage() {
 
   return (
     <main className="min-h-screen bg-background pb-20">
-      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-lg border-b border-border/50">
-        <div className="flex items-center justify-between h-14 px-4">
-          <Link to="/all-donghua" className="flex items-center gap-2 text-foreground hover:text-primary"><ArrowLeft className="w-5 h-5" /><span className="text-sm">Kembali</span></Link>
-          <FavoriteButton contentId={slug!} type="donghua" title={detail.title} poster={detail.poster} />
-        </div>
-      </header>
-
+      {/* Hero Banner */}
       <div className="relative">
-        <img src={detail.poster} alt={detail.title} className="w-full h-64 object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
+        <img src={detail.poster} alt={detail.title} className="w-full h-72 object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+        <div className="absolute top-0 left-0 right-0 z-40">
+          <div className="flex items-center justify-between h-14 px-4">
+            <Link to="/all-donghua" className="flex items-center gap-2 text-foreground hover:text-primary backdrop-blur-sm bg-background/30 rounded-full px-3 py-1.5">
+              <ArrowLeft className="w-5 h-5" /><span className="text-sm font-medium">Kembali</span>
+            </Link>
+            <div className="backdrop-blur-sm bg-background/30 rounded-full p-1">
+              <FavoriteButton contentId={slug!} type="donghua" title={detail.title} poster={detail.poster} />
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="px-4 -mt-20 relative z-10 space-y-4">
+      <div className="px-4 -mt-24 relative z-10 space-y-4">
+        {/* Poster + Title */}
         <div className="flex gap-4">
-          <img src={detail.poster} alt={detail.title} className="w-28 h-40 rounded-lg object-cover shadow-lg flex-shrink-0" />
-          <div className="flex-1 pt-8 space-y-2">
+          <img src={detail.poster} alt={detail.title} className="w-28 h-40 rounded-xl object-cover shadow-2xl flex-shrink-0 ring-2 ring-border/50" />
+          <div className="flex-1 pt-10 space-y-2">
             <h1 className="text-lg font-display font-bold text-foreground line-clamp-2">{detail.title}</h1>
+            {detail.rating && (
+              <div className="flex items-center gap-1.5 bg-yellow-500/10 px-2.5 py-1 rounded-lg w-fit">
+                <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                <span className="text-sm font-bold text-yellow-400">{detail.rating}</span>
+              </div>
+            )}
             <div className="flex flex-wrap gap-1.5">
               {detail.genres?.map(g => (
-                <span key={g.name} className="text-[10px] px-2 py-0.5 bg-secondary text-secondary-foreground rounded-full">{g.name}</span>
+                <span key={g.name} className="text-[10px] px-2.5 py-1 bg-secondary text-secondary-foreground rounded-full">{g.name}</span>
               ))}
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
-          {detail.info.status && <div><span className="font-medium text-foreground">Status:</span> {detail.info.status}</div>}
-          {detail.info.studio && <div><span className="font-medium text-foreground">Studio:</span> {detail.info.studio}</div>}
-          {detail.info.episodes && <div><span className="font-medium text-foreground">Episode:</span> {detail.info.episodes}</div>}
-          {detail.info.country && <div><span className="font-medium text-foreground">Negara:</span> {detail.info.country}</div>}
-        </div>
+        {/* Info Cards */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-2 gap-2">
+          {detail.info.status && (
+            <div className="flex items-center gap-2 p-3 bg-card rounded-xl border border-border/30">
+              <Tv className="w-4 h-4 text-primary" />
+              <div><p className="text-[10px] text-muted-foreground">Status</p><p className="text-xs font-medium text-foreground">{detail.info.status}</p></div>
+            </div>
+          )}
+          {detail.info.studio && (
+            <div className="flex items-center gap-2 p-3 bg-card rounded-xl border border-border/30">
+              <Building2 className="w-4 h-4 text-primary" />
+              <div><p className="text-[10px] text-muted-foreground">Studio</p><p className="text-xs font-medium text-foreground">{detail.info.studio}</p></div>
+            </div>
+          )}
+          {detail.info.episodes && (
+            <div className="flex items-center gap-2 p-3 bg-card rounded-xl border border-border/30">
+              <Clock className="w-4 h-4 text-primary" />
+              <div><p className="text-[10px] text-muted-foreground">Episode</p><p className="text-xs font-medium text-foreground">{detail.info.episodes}</p></div>
+            </div>
+          )}
+          {detail.info.country && (
+            <div className="flex items-center gap-2 p-3 bg-card rounded-xl border border-border/30">
+              <Globe className="w-4 h-4 text-primary" />
+              <div><p className="text-[10px] text-muted-foreground">Negara</p><p className="text-xs font-medium text-foreground">{detail.info.country}</p></div>
+            </div>
+          )}
+        </motion.div>
 
+        {/* Synopsis */}
         {detail.synopsis && (
           <div>
-            <h3 className="font-display font-bold text-foreground mb-1">Sinopsis</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">{detail.synopsis}</p>
+            <h3 className="font-display font-bold text-foreground mb-2">Sinopsis</h3>
+            <p className={`text-sm text-muted-foreground leading-relaxed ${!showFullSynopsis && 'line-clamp-4'}`}>{detail.synopsis}</p>
+            {detail.synopsis.length > 200 && (
+              <button onClick={() => setShowFullSynopsis(!showFullSynopsis)} className="text-xs text-primary font-medium mt-1">
+                {showFullSynopsis ? 'Sembunyikan' : 'Baca selengkapnya'}
+              </button>
+            )}
           </div>
         )}
 
+        {/* First Episode CTA */}
+        {eps && eps.length > 0 && (
+          <Link to={`/donghua-watch/${eps[eps.length - 1].slug}`} className="flex items-center justify-center gap-2 py-3 gradient-bg rounded-xl text-sm font-bold text-primary-foreground shadow-lg">
+            <Play className="w-5 h-5 fill-current" /> Mulai Tonton
+          </Link>
+        )}
+
+        {/* Episode List */}
         {eps && eps.length > 0 && (
           <div>
             <h3 className="font-display font-bold text-foreground mb-2">Episode ({detail.episodes.length})</h3>
             <div className="space-y-1.5">
               {eps.map(ep => (
-                <Link key={ep.slug} to={`/donghua-watch/${ep.slug}`} className="flex items-center gap-3 p-3 bg-card rounded-lg hover:bg-card/80 transition group">
-                  <Play className="w-4 h-4 text-primary flex-shrink-0" />
+                <Link key={ep.slug} to={`/donghua-watch/${ep.slug}`} className="flex items-center gap-3 p-3 bg-card rounded-xl hover:bg-card/80 transition group border border-border/20">
+                  <div className="w-8 h-8 rounded-lg gradient-bg flex items-center justify-center flex-shrink-0">
+                    <Play className="w-3.5 h-3.5 text-primary-foreground fill-current" />
+                  </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground truncate group-hover:text-primary transition">Episode {ep.episode}</p>
                     <p className="text-[10px] text-muted-foreground">{ep.date}</p>
@@ -79,7 +129,7 @@ export default function DonghuaDetailPage() {
               ))}
             </div>
             {detail.episodes.length > 20 && !showAllEps && (
-              <button onClick={() => setShowAllEps(true)} className="w-full mt-2 py-2 text-sm font-medium text-primary bg-primary/10 rounded-lg">Lihat Semua Episode</button>
+              <button onClick={() => setShowAllEps(true)} className="w-full mt-2 py-2.5 text-sm font-medium text-primary bg-primary/10 rounded-xl hover:bg-primary/20 transition">Lihat Semua Episode</button>
             )}
           </div>
         )}

@@ -8,7 +8,7 @@ import { ref, get } from 'firebase/database';
 import { useAuth } from '@/hooks/useAuth';
 import { useFriends } from '@/hooks/useFriends';
 import { getLevelBadge } from '@/lib/levelUtils';
-import { Crown, UserPlus, MessageCircle, Loader2, Users } from 'lucide-react';
+import { Crown, UserPlus, MessageCircle, Loader2, Users, Sparkles, Calendar } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface UserProfile {
@@ -103,84 +103,107 @@ export default function UserProfilePage() {
     <main className="min-h-screen bg-background">
       <Header />
       <div className="px-4 py-6 space-y-5 pb-24">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-4">
-          <div className="relative">
-            {profile.avatar_url ? (
-              <img src={profile.avatar_url} alt={profile.display_name || ''} className="w-16 h-16 rounded-2xl object-cover ring-2 ring-primary/50" />
-            ) : (
-              <div className="w-16 h-16 rounded-2xl gradient-bg flex items-center justify-center">
-                <span className="text-xl font-bold text-primary-foreground">{(profile.display_name || 'U').charAt(0).toUpperCase()}</span>
-              </div>
-            )}
-            {profile.is_premium && (
-              <div className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-500 rounded-full flex items-center justify-center">
-                <Crown className="w-3 h-3 text-white" />
-              </div>
-            )}
-          </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg font-display font-bold text-foreground">{profile.display_name || 'User'}</h1>
-              {profile.badge && (
-                <span className="text-xs font-bold text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded-full">{profile.badge}</span>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+          className="relative overflow-hidden rounded-2xl bg-card border border-border/30 p-5">
+          <div className="absolute inset-0 gradient-bg opacity-10" />
+          <div className="relative flex items-center gap-4">
+            <div className="relative">
+              {profile.avatar_url ? (
+                <img src={profile.avatar_url} alt={profile.display_name || ''} className="w-20 h-20 rounded-2xl object-cover ring-2 ring-primary/50 shadow-lg" />
+              ) : (
+                <div className="w-20 h-20 rounded-2xl gradient-bg flex items-center justify-center shadow-lg">
+                  <span className="text-2xl font-bold text-primary-foreground">{(profile.display_name || 'U').charAt(0).toUpperCase()}</span>
+                </div>
+              )}
+              {profile.is_premium && (
+                <div className="absolute -top-1 -right-1 w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center shadow-md">
+                  <Crown className="w-3.5 h-3.5 text-background" />
+                </div>
               )}
             </div>
-            <div className="flex items-center gap-2 mt-0.5">
-              <span className="text-sm">{badge.emoji}</span>
-              <span className="text-xs text-muted-foreground">Level {profile.level}</span>
-              <span className="text-xs text-muted-foreground">•</span>
-              <span className="text-xs text-muted-foreground flex items-center gap-1"><Users className="w-3 h-3" />{friendCount} Teman</span>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-xl font-display font-bold text-foreground">{profile.display_name || 'User'}</h1>
+                {profile.badge && (
+                  <span className="text-xs font-bold text-yellow-500 bg-yellow-500/10 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                    <Sparkles className="w-3 h-3" /> {profile.badge}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-3 mt-1">
+                <span className="text-xs text-muted-foreground flex items-center gap-1"><Users className="w-3 h-3" /> {friendCount} teman</span>
+                {profile.created_at && (
+                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Calendar className="w-3 h-3" /> {new Date(profile.created_at).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}
+                  </span>
+                )}
+              </div>
             </div>
-            <p className="text-[10px] text-muted-foreground mt-0.5">ID: {profile.user_id.slice(0, 8)}</p>
+          </div>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+          className="grid grid-cols-3 gap-2">
+          <div className="p-3 bg-card rounded-xl border border-border/30 text-center">
+            <p className="text-lg font-display font-bold text-foreground">{profile.level}</p>
+            <p className="text-[10px] text-muted-foreground">Level</p>
+          </div>
+          <div className="p-3 bg-card rounded-xl border border-border/30 text-center">
+            <p className="text-lg font-display font-bold text-foreground">{(profile.exp || 0).toLocaleString()}</p>
+            <p className="text-[10px] text-muted-foreground">EXP</p>
+          </div>
+          <div className="p-3 bg-card rounded-xl border border-border/30 text-center">
+            <p className="text-lg font-display font-bold text-foreground">{(profile.coins || 0).toLocaleString()}</p>
+            <p className="text-[10px] text-muted-foreground">Koin</p>
+          </div>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+          className="p-4 bg-card rounded-xl border border-border/30">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">{badge.emoji}</span>
+            <div>
+              <p className="text-sm font-bold text-foreground">{badge.name}</p>
+              <p className="text-xs text-muted-foreground">Rank berdasarkan level</p>
+            </div>
           </div>
         </motion.div>
 
         {!isMe && user && (
-          <div className="flex gap-2">
-            {!isFriend ? (
-              <button onClick={() => sendRequest(userId!)} className="flex-1 flex items-center justify-center gap-2 py-2.5 gradient-bg rounded-xl text-sm font-medium text-primary-foreground">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+            className="flex gap-2">
+            {!isFriend && (
+              <button onClick={() => sendRequest(userId!)} className="flex-1 flex items-center justify-center gap-2 py-3 gradient-bg rounded-xl text-sm font-bold text-primary-foreground shadow-lg">
                 <UserPlus className="w-4 h-4" /> Tambah Teman
               </button>
-            ) : (
-              <Link to={`/chat/${userId}`} className="flex-1 flex items-center justify-center gap-2 py-2.5 gradient-bg rounded-xl text-sm font-medium text-primary-foreground">
-                <MessageCircle className="w-4 h-4" /> Chat
+            )}
+            {isFriend && (
+              <Link to={`/chat/${userId}`} className="flex-1 flex items-center justify-center gap-2 py-3 gradient-bg rounded-xl text-sm font-bold text-primary-foreground shadow-lg">
+                <MessageCircle className="w-4 h-4" /> Kirim Pesan
               </Link>
             )}
-          </div>
+          </motion.div>
         )}
 
-        <LevelBadge level={profile.level} exp={profile.exp} isPremium={profile.is_premium} coins={isMe ? profile.coins : 0} badge={profile.badge} />
-
         <div className="flex gap-2">
-          <button onClick={() => setTab('info')} className={`px-4 py-2 rounded-xl text-xs font-medium transition ${tab === 'info' ? 'gradient-bg text-primary-foreground' : 'bg-card text-muted-foreground'}`}>
+          <button onClick={() => setTab('info')} className={`px-4 py-1.5 rounded-full text-xs font-medium transition ${tab === 'info' ? 'gradient-bg text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
             Info
           </button>
-          <button onClick={() => setTab('comments')} className={`px-4 py-2 rounded-xl text-xs font-medium transition ${tab === 'comments' ? 'gradient-bg text-primary-foreground' : 'bg-card text-muted-foreground'}`}>
+          <button onClick={() => setTab('comments')} className={`px-4 py-1.5 rounded-full text-xs font-medium transition ${tab === 'comments' ? 'gradient-bg text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
             Komentar ({comments.length})
           </button>
         </div>
 
-        {tab === 'info' && (
-          <div className="space-y-3">
-            <div className="p-3 bg-card rounded-xl space-y-2">
-              <p className="text-sm text-muted-foreground"><span className="font-medium text-foreground">EXP Total:</span> {profile.exp.toLocaleString()}</p>
-              <p className="text-sm text-muted-foreground"><span className="font-medium text-foreground">Status:</span> {profile.is_premium ? 'Premium' : 'Free'}</p>
-              {profile.created_at && <p className="text-sm text-muted-foreground"><span className="font-medium text-foreground">Bergabung:</span> {new Date(profile.created_at).toLocaleDateString('id-ID')}</p>}
-            </div>
-          </div>
-        )}
-
-        {tab === 'comments' && (
+        {tab === 'info' ? (
+          <LevelBadge level={profile.level} exp={profile.exp} isPremium={profile.is_premium} coins={profile.coins} badge={profile.badge} />
+        ) : (
           <div className="space-y-2">
             {comments.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">Belum ada komentar</p>
+              <p className="text-center text-muted-foreground text-sm py-8">Belum ada komentar</p>
             ) : comments.map(c => (
-              <div key={c.id} className="p-3 bg-card rounded-xl">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[10px] text-primary bg-primary/10 px-1.5 py-0.5 rounded capitalize">{c.content_type}</span>
-                  <span className="text-[10px] text-muted-foreground">{new Date(c.created_at).toLocaleDateString('id-ID')}</span>
-                </div>
+              <div key={c.id} className="p-3 bg-card rounded-xl border border-border/30">
                 <p className="text-sm text-foreground">{c.text}</p>
+                <p className="text-[10px] text-muted-foreground mt-1">{new Date(c.created_at).toLocaleDateString('id-ID')}</p>
               </div>
             ))}
           </div>

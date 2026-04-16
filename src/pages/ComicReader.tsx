@@ -5,12 +5,14 @@ import { addHistory } from '@/lib/storage';
 import { ExpEarn } from '@/components/ExpEarn';
 import { BottomNav } from '@/components/BottomNav';
 import type { ComicChapterDetail } from '@/lib/types';
-import { Loader2, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Loader2, ArrowLeft, ChevronLeft, ChevronRight, Download } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function ComicReaderPage() {
   const { chapterSlug } = useParams<{ chapterSlug: string }>();
   const [chapter, setChapter] = useState<ComicChapterDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     if (!chapterSlug) return;
@@ -21,6 +23,25 @@ export default function ComicReaderPage() {
       if (d) addHistory({ type: 'comic', contentId: d.navigation.chapterList, title: d.manga_title, poster: d.images[0] || '', chapterSlug, chapterTitle: d.chapter_title });
     }).catch(() => setLoading(false));
   }, [chapterSlug]);
+
+  const handleDownloadOffline = async () => {
+    if (!chapter) return;
+    setDownloading(true);
+    try {
+      const offlineData = JSON.parse(localStorage.getItem('offline-comics') || '{}');
+      offlineData[chapterSlug!] = {
+        manga_title: chapter.manga_title,
+        chapter_title: chapter.chapter_title,
+        images: chapter.images,
+        savedAt: Date.now(),
+      };
+      localStorage.setItem('offline-comics', JSON.stringify(offlineData));
+      toast.success(`${chapter.images.length} halaman disimpan untuk offline`);
+    } catch {
+      toast.error('Gagal menyimpan offline');
+    }
+    setDownloading(false);
+  };
 
   if (loading) return <div className="min-h-screen bg-background flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
   if (!chapter) return <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">Chapter tidak ditemukan</div>;
@@ -34,7 +55,9 @@ export default function ComicReaderPage() {
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <span className="text-sm font-medium text-foreground truncate flex-1 text-center">{chapter.chapter_title}</span>
-          <div className="w-5" />
+          <button onClick={handleDownloadOffline} disabled={downloading} className="p-1.5 text-primary hover:bg-primary/10 rounded-lg transition disabled:opacity-50">
+            {downloading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
+          </button>
         </div>
       </header>
 

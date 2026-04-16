@@ -5,7 +5,7 @@ import { BottomNav } from '@/components/BottomNav';
 import { useAuth } from '@/hooks/useAuth';
 import { db } from '@/integrations/firebase/config';
 import { ref, get, remove, update } from 'firebase/database';
-import { Shield, Users, MessageSquare, Trash2, Search, Loader2, Crown } from 'lucide-react';
+import { Shield, Users, MessageSquare, Trash2, Search, Loader2, Crown, ArrowUpDown } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 
@@ -32,6 +32,10 @@ export default function AdminPanel() {
   const [discussions, setDiscussions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [editingUser, setEditingUser] = useState<string | null>(null);
+  const [editLevel, setEditLevel] = useState('');
+  const [editExp, setEditExp] = useState('');
+  const [editCoins, setEditCoins] = useState('');
 
   useEffect(() => {
     if (!user || user.email !== ADMIN_EMAIL) { navigate('/'); return; }
@@ -57,7 +61,6 @@ export default function AdminPanel() {
         });
       }
       allComments.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-      // Enrich with display names
       const userIds = [...new Set(allComments.map(c => c.user_id))];
       const names: Record<string, string> = {};
       for (const uid of userIds) {
@@ -113,6 +116,23 @@ export default function AdminPanel() {
     await update(ref(db, `profiles/${userId}`), { is_premium: isPremium, premium_expires_at: expiresAt });
     setUsers(prev => prev.map(u => u.user_id === userId ? { ...u, is_premium: isPremium } : u));
     toast.success(isPremium ? 'Premium diaktifkan' : 'Premium dinonaktifkan');
+  };
+
+  const startEditUser = (u: UserProfile) => {
+    setEditingUser(u.user_id);
+    setEditLevel(String(u.level || 0));
+    setEditExp(String(u.exp || 0));
+    setEditCoins(String(u.coins || 0));
+  };
+
+  const saveUserStats = async (userId: string) => {
+    const level = Math.max(0, parseInt(editLevel) || 0);
+    const exp = Math.max(0, parseInt(editExp) || 0);
+    const coins = Math.max(0, parseInt(editCoins) || 0);
+    await update(ref(db, `profiles/${userId}`), { level, exp, coins });
+    setUsers(prev => prev.map(u => u.user_id === userId ? { ...u, level, exp, coins } : u));
+    setEditingUser(null);
+    toast.success('Stats diperbarui');
   };
 
   const filteredUsers = users.filter(u => !searchQuery || (u.display_name || '').toLowerCase().includes(searchQuery.toLowerCase()));
@@ -173,7 +193,35 @@ export default function AdminPanel() {
                     </div>
                     <p className="text-[10px] text-muted-foreground">Lv.{u.level} • {(u.coins || 0).toLocaleString()} koin • EXP: {(u.exp || 0).toLocaleString()}</p>
                   </div>
+                  <button onClick={() => startEditUser(u)} className="p-1.5 bg-primary/10 rounded-lg hover:bg-primary/20 transition">
+                    <ArrowUpDown className="w-3.5 h-3.5 text-primary" />
+                  </button>
                 </div>
+
+                {editingUser === u.user_id && (
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mb-3 p-3 bg-muted/50 rounded-lg space-y-2">
+                    <p className="text-xs font-semibold text-foreground">Edit Stats</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <label className="text-[10px] text-muted-foreground">Level</label>
+                        <input value={editLevel} onChange={e => setEditLevel(e.target.value)} type="number" min="0" className="w-full px-2 py-1 bg-background border border-border rounded text-xs text-foreground" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-muted-foreground">EXP</label>
+                        <input value={editExp} onChange={e => setEditExp(e.target.value)} type="number" min="0" className="w-full px-2 py-1 bg-background border border-border rounded text-xs text-foreground" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-muted-foreground">Koin</label>
+                        <input value={editCoins} onChange={e => setEditCoins(e.target.value)} type="number" min="0" className="w-full px-2 py-1 bg-background border border-border rounded text-xs text-foreground" />
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={() => saveUserStats(u.user_id)} className="px-3 py-1 text-[10px] gradient-bg text-primary-foreground rounded-lg font-medium">Simpan</button>
+                      <button onClick={() => setEditingUser(null)} className="px-3 py-1 text-[10px] bg-muted text-muted-foreground rounded-lg">Batal</button>
+                    </div>
+                  </motion.div>
+                )}
+
                 <div className="flex flex-wrap gap-2">
                   <button onClick={() => updateUserBadge(u.user_id, 'Developer')} className="px-2 py-1 text-[10px] bg-primary/10 text-primary rounded-lg">+ Developer</button>
                   <button onClick={() => updateUserBadge(u.user_id, 'Admin')} className="px-2 py-1 text-[10px] bg-destructive/10 text-destructive rounded-lg">+ Admin</button>
@@ -193,30 +241,27 @@ export default function AdminPanel() {
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-foreground">{c.display_name}</p>
                   <p className="text-[11px] text-muted-foreground mt-0.5 break-words">{c.text}</p>
-                  <p className="text-[9px] text-muted-foreground mt-0.5">{c.content_type} • {new Date(c.created_at).toLocaleDateString('id-ID')}</p>
+                  <p className="text-[10px] text-muted-foreground/70 mt-1">{new Date(c.created_at).toLocaleDateString('id-ID')}</p>
                 </div>
-                <button onClick={() => deleteComment(c)} className="p-1.5 text-destructive hover:bg-destructive/10 rounded-lg">
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                <button onClick={() => deleteComment(c)} className="p-1.5 text-destructive hover:bg-destructive/10 rounded-lg transition"><Trash2 className="w-3.5 h-3.5" /></button>
               </div>
             ))}
-            {comments.length === 0 && <p className="text-center text-sm text-muted-foreground py-8">Tidak ada komentar</p>}
           </div>
         ) : (
           <div className="space-y-2">
             {discussions.map(d => (
               <div key={d.id} className="p-3 bg-card rounded-xl border border-border/30 flex items-start gap-3">
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-foreground">{d.display_name}</p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5 break-words">{d.message}</p>
-                  <p className="text-[9px] text-muted-foreground mt-0.5">{d.room} • {new Date(d.created_at).toLocaleDateString('id-ID')}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs font-medium text-foreground">{d.display_name}</p>
+                    <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{d.room_path}</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-0.5 break-words">{d.text}</p>
+                  <p className="text-[10px] text-muted-foreground/70 mt-1">{new Date(d.created_at).toLocaleDateString('id-ID')}</p>
                 </div>
-                <button onClick={() => deleteDiscussion(d)} className="p-1.5 text-destructive hover:bg-destructive/10 rounded-lg">
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                <button onClick={() => deleteDiscussion(d)} className="p-1.5 text-destructive hover:bg-destructive/10 rounded-lg transition"><Trash2 className="w-3.5 h-3.5" /></button>
               </div>
             ))}
-            {discussions.length === 0 && <p className="text-center text-sm text-muted-foreground py-8">Tidak ada diskusi</p>}
           </div>
         )}
       </div>

@@ -6,9 +6,8 @@ import { CommentSection } from '@/components/CommentSection';
 import { ExpEarn } from '@/components/ExpEarn';
 import { BottomNav } from '@/components/BottomNav';
 import type { EpisodeDetail } from '@/lib/types';
-import { Loader2, ArrowLeft, ChevronLeft, ChevronRight, Download, ExternalLink, Maximize2, Minimize2 } from 'lucide-react';
+import { Loader2, ArrowLeft, ChevronLeft, ChevronRight, Download, ExternalLink } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { cn } from '@/lib/utils';
 
 export default function WatchPage() {
   const { episodeId } = useParams<{ episodeId: string }>();
@@ -17,7 +16,6 @@ export default function WatchPage() {
   const [streamUrl, setStreamUrl] = useState('');
   const [activeServer, setActiveServer] = useState('');
   const [showDownload, setShowDownload] = useState(false);
-  const [widescreen, setWidescreen] = useState(true);
 
   useEffect(() => {
     if (!episodeId) return;
@@ -48,13 +46,9 @@ export default function WatchPage() {
           <Link to={`/anime/${episode.animeId}`} className="flex items-center gap-2 text-foreground hover:text-primary">
             <ArrowLeft className="w-5 h-5" /><span className="text-sm font-medium">Kembali</span>
           </Link>
-          <button onClick={() => setWidescreen(!widescreen)} className="flex items-center gap-1.5 px-3 py-1.5 bg-muted rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground transition">
-            {widescreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
-            {widescreen ? '16:9' : '4:3'}
-          </button>
         </div>
       </header>
-      <div className={cn('w-full bg-black', widescreen ? 'aspect-video' : 'aspect-[4/3]')}>
+      <div className="w-full bg-background aspect-video">
         <iframe src={streamUrl} className="w-full h-full" allowFullScreen allow="autoplay; fullscreen" />
       </div>
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="px-4 py-4 space-y-4">

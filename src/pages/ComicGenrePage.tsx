@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
@@ -6,6 +6,7 @@ import { ComicCard } from '@/components/ComicCard';
 import { getComicByGenre } from '@/lib/api';
 import type { Comic } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 
 export default function ComicGenrePage() {
   const { genre } = useParams<{ genre: string }>();
@@ -21,6 +22,8 @@ export default function ComicGenrePage() {
   }, [genre]);
 
   const hasMore = displayCount < comics.length;
+  const loadMore = useCallback(() => { setDisplayCount(prev => prev + 18); }, []);
+  const sentinelRef = useInfiniteScroll(loadMore, hasMore, false);
 
   return (
     <main className="min-h-screen bg-background">
@@ -33,12 +36,13 @@ export default function ComicGenrePage() {
               {comics.slice(0, displayCount).map((c, i) => <ComicCard key={i} comic={c} />)}
             </div>
             {hasMore && (
-              <button onClick={() => setDisplayCount(prev => prev + 18)} className="w-full py-2.5 text-sm font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition">
+              <button onClick={loadMore} className="w-full py-2.5 text-sm font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition">
                 Muat Lebih Banyak
               </button>
             )}
           </>
         )}
+        <div ref={sentinelRef} className="h-4" />
       </div>
       <BottomNav />
     </main>
