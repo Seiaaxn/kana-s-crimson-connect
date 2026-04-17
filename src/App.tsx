@@ -35,6 +35,7 @@ import AchievementsPage from "./pages/AchievementsPage";
 import DiscussionPage from "./pages/DiscussionPage";
 import AdminPanel from "./pages/AdminPanel";
 import SharePremiumPage from "./pages/SharePremiumPage";
+import SettingsPage from "./pages/SettingsPage";
 
 const queryClient = new QueryClient();
 
@@ -76,6 +77,7 @@ const App = () => (
               <Route path="/discussion" element={<DiscussionPage />} />
               <Route path="/admin" element={<AdminPanel />} />
               <Route path="/share-premium" element={<SharePremiumPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
