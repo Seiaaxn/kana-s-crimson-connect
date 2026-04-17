@@ -117,7 +117,7 @@ export default function PremiumPage() {
                 <Gift className="w-5 h-5 text-primary" />
                 <div className="text-left">
                   <p className="text-sm font-bold text-foreground">Berbagi Premium</p>
-                  <p className="text-[10px] text-muted-foreground">Kirim 3 hari premium ke teman (300 koin)</p>
+                  <p className="text-[10px] text-muted-foreground">Kirim 3 hari premium ke teman (3.000 koin)</p>
                 </div>
               </div>
             </button>
