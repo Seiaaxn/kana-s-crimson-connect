@@ -4,7 +4,7 @@ import { BottomNav } from '@/components/BottomNav';
 import { LevelBadge } from '@/components/LevelBadge';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
-import { Clock, Heart, LogOut, Loader2, Crown, Users, Trophy, Shield, Gift, MessageSquare, Sparkles } from 'lucide-react';
+import { Clock, Heart, LogOut, Loader2, Crown, Users, Trophy, Shield, Gift, MessageSquare, Sparkles, Settings } from 'lucide-react';
 import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 
@@ -38,6 +38,7 @@ export default function ProfilePage() {
   const isAdmin = user.email === 'ryu694602@gmail.com';
 
   const menuItems = [
+    { icon: Settings, label: 'Pengaturan Profil', href: '/settings', color: 'text-primary' },
     { icon: Clock, label: 'Riwayat Tontonan', href: '/history', color: 'text-primary' },
     { icon: Heart, label: 'Favorit', href: '/favorites', color: 'text-primary' },
     { icon: Users, label: 'Pertemanan', href: '/friends', color: 'text-primary' },
