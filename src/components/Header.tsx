@@ -18,7 +18,7 @@ export function Header() {
       <div className="flex items-center justify-between h-14 px-4 max-w-7xl mx-auto">
         <Link to="/" className="flex items-center gap-2">
           <span className="text-xl font-display font-bold">
-            <span className="gradient-text">SHINKAN</span>
+            <span className="gradient-text">NEXAN</span>
             <span className="text-foreground">IMEID</span>
           </span>
         </Link>
