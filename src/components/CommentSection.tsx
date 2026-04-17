@@ -206,10 +206,14 @@ export function CommentSection({ contentId, contentType }: CommentSectionProps) 
         <span className="text-sm text-muted-foreground">({totalComments})</span>
       </div>
 
-      {user && profile ? (
+      {user ? (
         <form onSubmit={handleSubmit} className="flex gap-3 items-start">
           <Link to="/profile" className="w-9 h-9 rounded-full gradient-bg flex items-center justify-center flex-shrink-0 overflow-hidden">
-            {profile.avatar_url ? <img src={profile.avatar_url} className="w-full h-full object-cover" /> : <span className="text-sm font-bold text-primary-foreground">{(profile.display_name || 'U').charAt(0).toUpperCase()}</span>}
+            {(profile?.avatar_url || user.photoURL) ? (
+              <img src={profile?.avatar_url || user.photoURL || ''} className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-sm font-bold text-primary-foreground">{(profile?.display_name || user.displayName || user.email || 'U').charAt(0).toUpperCase()}</span>
+            )}
           </Link>
           <div className="flex-1 relative">
             <textarea value={newComment} onChange={e => setNewComment(e.target.value)} placeholder="Tulis komentar..." maxLength={500} rows={2}
