@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Search, User, Sun, Moon, Bot } from 'lucide-react';
+import { Search, User, Sun, Moon } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
 import { NotificationBell } from './NotificationBell';
