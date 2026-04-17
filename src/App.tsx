@@ -35,7 +35,6 @@ import AchievementsPage from "./pages/AchievementsPage";
 import DiscussionPage from "./pages/DiscussionPage";
 import AdminPanel from "./pages/AdminPanel";
 import SharePremiumPage from "./pages/SharePremiumPage";
-import ArimaChatPage from "./pages/ArimaChatPage";
 
 const queryClient = new QueryClient();
 
@@ -77,7 +76,6 @@ const App = () => (
               <Route path="/discussion" element={<DiscussionPage />} />
               <Route path="/admin" element={<AdminPanel />} />
               <Route path="/share-premium" element={<SharePremiumPage />} />
-              <Route path="/arima-chat" element={<ArimaChatPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

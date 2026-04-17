@@ -15,10 +15,16 @@ interface Friend {
   display_name: string | null;
   avatar_url: string | null;
   is_premium: boolean;
+  premium_expires_at?: string | null;
 }
 
-const SHARE_COST = 30000;
-const SHARE_DAYS = 30;
+const DURATION_OPTIONS = [
+  { days: 3, cost: 3000, label: '3 Hari' },
+  { days: 7, cost: 7000, label: '7 Hari' },
+  { days: 14, cost: 14000, label: '14 Hari' },
+  { days: 30, cost: 30000, label: '30 Hari' },
+  { days: 90, cost: 80000, label: '90 Hari' },
+];
 
 export default function SharePremiumPage() {
   const navigate = useNavigate();
@@ -28,6 +34,7 @@ export default function SharePremiumPage() {
   const [loading, setLoading] = useState(true);
   const [sharing, setSharing] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedDuration, setSelectedDuration] = useState(DURATION_OPTIONS[3]);
 
   useEffect(() => {
     if (!user) { navigate('/login'); return; }
@@ -55,7 +62,13 @@ export default function SharePremiumPage() {
         const pSnap = await get(ref(db, `profiles/${fid}`));
         if (pSnap.exists()) {
           const val = pSnap.val();
-          friendProfiles.push({ user_id: fid, display_name: val.display_name, avatar_url: val.avatar_url, is_premium: val.is_premium || false });
+          friendProfiles.push({
+            user_id: fid,
+            display_name: val.display_name,
+            avatar_url: val.avatar_url,
+            is_premium: val.is_premium || false,
+            premium_expires_at: val.premium_expires_at || null,
+          });
         }
       }
       setFriends(friendProfiles);
@@ -70,8 +83,10 @@ export default function SharePremiumPage() {
     if (!profile || sharing || !user) return;
     setSharing(friendId);
 
+    const SHARE_DAYS = selectedDuration.days;
+    const SHARE_COST = selectedDuration.cost;
+
     try {
-      // Re-check current coin balance from DB
       const profileSnap = await get(ref(db, `profiles/${user.uid}`));
       const currentCoins = profileSnap.exists() ? (profileSnap.val().coins || 0) : 0;
 
@@ -81,38 +96,52 @@ export default function SharePremiumPage() {
         return;
       }
 
-      // Check if friend is already premium
+      // Get friend current premium status & expiry
       const friendSnap = await get(ref(db, `profiles/${friendId}`));
-      if (friendSnap.exists() && friendSnap.val().is_premium) {
-        toast.error('Teman ini sudah premium!');
-        setFriends(prev => prev.map(f => f.user_id === friendId ? { ...f, is_premium: true } : f));
+      if (!friendSnap.exists()) {
+        toast.error('Teman tidak ditemukan');
         setSharing(null);
         return;
       }
+      const friendData = friendSnap.val();
+      const now = new Date();
+      let baseDate = now;
+      if (friendData.is_premium && friendData.premium_expires_at) {
+        const existingExpiry = new Date(friendData.premium_expires_at);
+        if (existingExpiry > now) baseDate = existingExpiry;
+      }
+      const newExpiresAt = new Date(baseDate);
+      newExpiresAt.setDate(newExpiresAt.getDate() + SHARE_DAYS);
 
-      // Deduct coins
+      // Deduct coins from sender
       await update(ref(db, `profiles/${user.uid}`), { coins: currentCoins - SHARE_COST });
 
-      // Give premium to friend
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + SHARE_DAYS);
-      await update(ref(db, `profiles/${friendId}`), { is_premium: true, premium_expires_at: expiresAt.toISOString() });
+      // Update friend's premium (extend or activate)
+      await update(ref(db, `profiles/${friendId}`), {
+        is_premium: true,
+        premium_expires_at: newExpiresAt.toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+
+      const friendProfile = friends.find(f => f.user_id === friendId);
+      const wasAlreadyPremium = friendData.is_premium;
 
       // Send notification
-      const friendProfile = friends.find(f => f.user_id === friendId);
       await push(ref(db, `notifications/${friendId}`), {
         user_id: friendId,
-        title: 'Premium Diterima! 🎉',
-        message: `${profile.display_name || 'Seseorang'} berbagi premium ${SHARE_DAYS} hari denganmu!`,
+        title: wasAlreadyPremium ? 'Premium Diperpanjang! 🎁' : 'Premium Diterima! 🎉',
+        message: `${profile.display_name || 'Seseorang'} ${wasAlreadyPremium ? 'memperpanjang' : 'memberi'} premium ${SHARE_DAYS} hari ${wasAlreadyPremium ? 'untukmu' : 'denganmu'}!`,
         type: 'gift',
         is_read: false,
         created_at: new Date().toISOString(),
       });
 
-      setFriends(prev => prev.map(f => f.user_id === friendId ? { ...f, is_premium: true } : f));
-      toast.success(`Premium ${SHARE_DAYS} hari diberikan ke ${friendProfile?.display_name || 'teman'}! (-${SHARE_COST.toLocaleString()} koin)`);
-      
-      // Refresh profile to update coin display
+      setFriends(prev => prev.map(f => f.user_id === friendId
+        ? { ...f, is_premium: true, premium_expires_at: newExpiresAt.toISOString() }
+        : f));
+
+      toast.success(`Premium ${SHARE_DAYS} hari ${wasAlreadyPremium ? 'ditambahkan' : 'diberikan'} ke ${friendProfile?.display_name || 'teman'}! (-${SHARE_COST.toLocaleString()} koin)`);
+
       if (fetchProfile) fetchProfile();
     } catch (err) {
       console.error('Error sharing premium:', err);
@@ -137,11 +166,34 @@ export default function SharePremiumPage() {
               <Gift className="w-6 h-6 text-primary-foreground" />
               <h1 className="text-lg font-display font-bold text-primary-foreground">Berbagi Premium</h1>
             </div>
-            <p className="text-xs text-primary-foreground/80">Berikan {SHARE_DAYS} hari premium ke teman dengan {SHARE_COST.toLocaleString()} koin</p>
+            <p className="text-xs text-primary-foreground/80">Pilih durasi & berikan premium ke teman dengan koinmu</p>
             <p className="text-xs text-primary-foreground/60 mt-1">Koin kamu: {(profile?.coins || 0).toLocaleString()}</p>
           </div>
           <div className="absolute -right-4 -top-4 w-32 h-32 bg-primary-foreground/10 rounded-full blur-xl" />
         </motion.div>
+
+        {/* Duration selector */}
+        <div>
+          <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">Pilih Durasi</p>
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+            {DURATION_OPTIONS.map(opt => (
+              <button
+                key={opt.days}
+                onClick={() => setSelectedDuration(opt)}
+                className={`px-2 py-2.5 rounded-xl text-xs font-bold transition border ${
+                  selectedDuration.days === opt.days
+                    ? 'gradient-bg text-primary-foreground border-transparent shadow-lg'
+                    : 'bg-card text-foreground border-border/50 hover:border-primary/50'
+                }`}
+              >
+                <div>{opt.label}</div>
+                <div className={`text-[10px] font-normal mt-0.5 ${selectedDuration.days === opt.days ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
+                  {opt.cost.toLocaleString()} koin
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
 
         <div className="relative">
           <Search className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
@@ -166,21 +218,25 @@ export default function SharePremiumPage() {
                   {friend.avatar_url ? <img src={friend.avatar_url} className="w-full h-full object-cover" /> :
                     <span className="text-sm font-bold text-secondary-foreground">{(friend.display_name || '?').charAt(0).toUpperCase()}</span>}
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-foreground">{friend.display_name || 'User'}</span>
-                    {friend.is_premium && <Crown className="w-3.5 h-3.5 text-yellow-500" />}
+                    <span className="text-sm font-medium text-foreground truncate">{friend.display_name || 'User'}</span>
+                    {friend.is_premium && <Crown className="w-3.5 h-3.5 text-yellow-500 flex-shrink-0" />}
                   </div>
-                  {friend.is_premium && <p className="text-[10px] text-yellow-500">Sudah Premium</p>}
+                  {friend.is_premium && friend.premium_expires_at && (
+                    <p className="text-[10px] text-yellow-500">
+                      Aktif s/d {new Date(friend.premium_expires_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                    </p>
+                  )}
                 </div>
                 <button
                   onClick={() => sharePremium(friend.user_id)}
-                  disabled={!!sharing || friend.is_premium}
+                  disabled={!!sharing}
                   className="px-3 py-1.5 gradient-bg text-primary-foreground text-xs font-bold rounded-lg hover:opacity-90 transition disabled:opacity-40 flex items-center gap-1"
                 >
                   {sharing === friend.user_id ? <Loader2 className="w-3 h-3 animate-spin" /> :
                     friend.is_premium ? <Check className="w-3 h-3" /> : <Gift className="w-3 h-3" />}
-                  {friend.is_premium ? 'Aktif' : 'Kirim'}
+                  {friend.is_premium ? 'Tambah' : 'Kirim'}
                 </button>
               </motion.div>
             ))}
