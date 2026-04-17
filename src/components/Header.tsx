@@ -25,10 +25,6 @@ export function Header() {
         </Link>
 
         <div className="flex items-center gap-1">
-          <Link to="/arima-chat" className="p-2 rounded-full hover:bg-muted transition-colors" title="Chat Kana AI">
-            <Bot className="w-5 h-5 text-pink-500" />
-          </Link>
-
           <button onClick={toggleTheme} className="p-2 rounded-full hover:bg-muted transition-colors">
             {theme === 'dark' ? <Sun className="w-5 h-5 text-foreground" /> : <Moon className="w-5 h-5 text-foreground" />}
           </button>
