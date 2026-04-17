@@ -4,7 +4,7 @@ import { BottomNav } from '@/components/BottomNav';
 import { LevelBadge } from '@/components/LevelBadge';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
-import { Clock, Heart, LogOut, Loader2, Crown, Users, Trophy, Shield, Gift, MessageSquare, Sparkles, Settings } from 'lucide-react';
+import { Clock, Heart, LogOut, Loader2, Crown, Users, Trophy, Shield, Gift, MessageSquare, Sparkles, Settings, Inbox } from 'lucide-react';
 import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 
@@ -46,6 +46,7 @@ export default function ProfilePage() {
     { icon: Trophy, label: 'Leaderboard', href: '/leaderboard', color: 'text-yellow-500' },
     { icon: Crown, label: 'Premium', href: '/premium', color: 'text-yellow-500' },
     ...(profile?.is_premium ? [{ icon: Gift, label: 'Berbagi Premium', href: '/share-premium', color: 'text-yellow-500' }] : []),
+    { icon: Inbox, label: 'Premium yang Diterima', href: '/premium-received', color: 'text-yellow-500' },
     { icon: Trophy, label: 'Achievement', href: '/achievements', color: 'text-yellow-500' },
     ...(isAdmin ? [{ icon: Shield, label: 'Admin Panel', href: '/admin', color: 'text-destructive' }] : []),
   ];
