@@ -3,6 +3,7 @@ import { Search, User, Sun, Moon } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
 import { NotificationBell } from './NotificationBell';
+import { HeaderExpBar } from './HeaderExpBar';
 
 const LOGO_URL = 'https://cdn.phototourl.com/free/2026-04-15-dbc2ede5-53df-434f-97b7-1a684467a4a7.jpg';
 
@@ -15,7 +16,8 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-lg border-b border-border/50">
-      <div className="flex items-center justify-between h-14 px-4 max-w-7xl mx-auto">
+      <div className="flex flex-col">
+      <div className="flex items-center justify-between h-14 px-4 max-w-7xl mx-auto w-full">
         <Link to="/" className="flex items-center gap-2">
           <span className="text-xl font-display font-bold">
             <span className="gradient-text">NEXAN</span>
@@ -54,6 +56,8 @@ export function Header() {
             )}
           </Link>
         </div>
+      </div>
+      {user && <HeaderExpBar />}
       </div>
     </header>
   );
