@@ -14,7 +14,7 @@ interface ExpEarnProps {
 // 1 hour cooldown per content to avoid farming on refresh
 const COOLDOWN_MS = 60 * 60 * 1000;
 
-export function ExpEarn({ source, contentId, baseExp = 10 }: ExpEarnProps) {
+export function ExpEarn({ source, contentId, contentTitle, baseExp = 10 }: ExpEarnProps) {
   const { user } = useAuth();
   const { profile, loading, addExpAndCoins } = useProfile();
   const earned = useRef(false);
@@ -25,7 +25,6 @@ export function ExpEarn({ source, contentId, baseExp = 10 }: ExpEarnProps) {
   useEffect(() => {
     if (!user || loading || !profile || earned.current) return;
 
-    // Per-user per-content cooldown
     const key = `exp_earned_${user.uid}_${source}_${contentId}`;
     const last = Number(localStorage.getItem(key) || 0);
     if (Date.now() - last < COOLDOWN_MS) {
@@ -35,7 +34,7 @@ export function ExpEarn({ source, contentId, baseExp = 10 }: ExpEarnProps) {
 
     earned.current = true;
     const timer = setTimeout(async () => {
-      const result = await addExpAndCoins(baseExp, 1);
+      const result = await addExpAndCoins(baseExp, 1, { source, contentId, contentTitle });
       if (result) {
         localStorage.setItem(key, String(Date.now()));
         setEarnedAmount(result.gainedExp);
@@ -43,12 +42,12 @@ export function ExpEarn({ source, contentId, baseExp = 10 }: ExpEarnProps) {
         setShowEarn(true);
         setTimeout(() => setShowEarn(false), 3000);
       } else {
-        earned.current = false; // allow retry on next mount
+        earned.current = false;
       }
     }, 5000);
 
     return () => clearTimeout(timer);
-  }, [user, loading, profile, source, contentId, baseExp, addExpAndCoins]);
+  }, [user, loading, profile, source, contentId, contentTitle, baseExp, addExpAndCoins]);
 
   if (!user) return null;
 
