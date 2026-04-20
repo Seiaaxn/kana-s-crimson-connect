@@ -3,7 +3,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
 import { Zap, Crown, Coins } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { toast } from 'sonner';
 
 interface ExpEarnProps {
   source: 'watch_anime' | 'watch_donghua' | 'read_comic';
@@ -12,41 +11,44 @@ interface ExpEarnProps {
   baseExp?: number;
 }
 
-const sourceLabels = {
-  watch_anime: 'Menonton Anime',
-  watch_donghua: 'Menonton Donghua',
-  read_comic: 'Membaca Komik',
-};
+// 1 hour cooldown per content to avoid farming on refresh
+const COOLDOWN_MS = 60 * 60 * 1000;
 
-export function ExpEarn({ source, contentId, contentTitle, baseExp = 10 }: ExpEarnProps) {
+export function ExpEarn({ source, contentId, baseExp = 10 }: ExpEarnProps) {
   const { user } = useAuth();
-  const { profile, addExp, addCoins } = useProfile();
+  const { profile, loading, addExpAndCoins } = useProfile();
   const earned = useRef(false);
   const [showEarn, setShowEarn] = useState(false);
   const [earnedAmount, setEarnedAmount] = useState(0);
   const [earnedCoin, setEarnedCoin] = useState(false);
 
   useEffect(() => {
-    if (!user || earned.current) return;
+    if (!user || loading || !profile || earned.current) return;
+
+    // Per-user per-content cooldown
+    const key = `exp_earned_${user.uid}_${source}_${contentId}`;
+    const last = Number(localStorage.getItem(key) || 0);
+    if (Date.now() - last < COOLDOWN_MS) {
+      earned.current = true;
+      return;
+    }
+
     earned.current = true;
-
     const timer = setTimeout(async () => {
-      const result = await addExp(baseExp);
+      const result = await addExpAndCoins(baseExp, 1);
       if (result) {
-        const amount = profile?.is_premium ? baseExp * 5 : baseExp;
-        setEarnedAmount(amount);
+        localStorage.setItem(key, String(Date.now()));
+        setEarnedAmount(result.gainedExp);
+        setEarnedCoin(result.gainedCoins > 0);
         setShowEarn(true);
-
-        // Give 1 coin per activity
-        const coinOk = await addCoins(1);
-        if (coinOk) setEarnedCoin(true);
-
         setTimeout(() => setShowEarn(false), 3000);
+      } else {
+        earned.current = false; // allow retry on next mount
       }
     }, 5000);
 
     return () => clearTimeout(timer);
-  }, [user]);
+  }, [user, loading, profile, source, contentId, baseExp, addExpAndCoins]);
 
   if (!user) return null;
 
