@@ -37,6 +37,7 @@ import AdminPanel from "./pages/AdminPanel";
 import SharePremiumPage from "./pages/SharePremiumPage";
 import SettingsPage from "./pages/SettingsPage";
 import PremiumReceivedPage from "./pages/PremiumReceivedPage";
+import ExpHistoryPage from "./pages/ExpHistoryPage";
 
 const queryClient = new QueryClient();
 
@@ -80,6 +81,7 @@ const App = () => (
               <Route path="/share-premium" element={<SharePremiumPage />} />
               <Route path="/premium-received" element={<PremiumReceivedPage />} />
               <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/exp-history" element={<ExpHistoryPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
