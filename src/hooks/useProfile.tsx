@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { db } from '@/integrations/firebase/config';
-import { ref, onValue, update, get } from 'firebase/database';
+import { ref, onValue, update, get, runTransaction } from 'firebase/database';
 import { useAuth } from './useAuth';
 
 export interface Profile {
@@ -21,6 +21,8 @@ export interface Profile {
   updated_at?: string;
   email?: string | null;
 }
+
+const expNeededFor = (level: number) => Math.floor(Math.pow(level, 1.8) * 100);
 
 export function useProfile() {
   const { user } = useAuth();
@@ -49,19 +51,41 @@ export function useProfile() {
     }
   }, [user]);
 
+  // Atomic: add EXP + coins in one transaction so they don't overwrite each other
+  const addExpAndCoins = useCallback(async (expAmount: number, coinAmount: number = 0) => {
+    if (!user) return null;
+    const profileRef = ref(db, `profiles/${user.uid}`);
+    let appliedExp = 0;
+    const result = await runTransaction(profileRef, (current) => {
+      if (!current) return current;
+      const isPremium = !!current.is_premium && (!current.premium_expires_at || new Date(current.premium_expires_at) > new Date());
+      const multiplier = isPremium ? 5 : 1;
+      const gained = expAmount * multiplier;
+      appliedExp = gained;
+      let newExp = (current.exp || 0) + gained;
+      let newLevel = current.level || 1;
+      let needed = expNeededFor(newLevel);
+      while (newExp >= needed) {
+        newExp -= needed;
+        newLevel++;
+        needed = expNeededFor(newLevel);
+      }
+      return {
+        ...current,
+        exp: newExp,
+        level: newLevel,
+        coins: (current.coins || 0) + coinAmount,
+        updated_at: new Date().toISOString(),
+      };
+    });
+    if (!result.committed) return null;
+    return { gainedExp: appliedExp, gainedCoins: coinAmount };
+  }, [user]);
+
   const addExp = useCallback(async (amount: number) => {
-    if (!user || !profile) return null;
-    const newExp = profile.exp + amount;
-    let newLevel = profile.level;
-    let expNeeded = Math.floor(Math.pow(newLevel, 1.8) * 100);
-    let totalExp = newExp;
-    while (totalExp >= expNeeded) {
-      newLevel++;
-      expNeeded = Math.floor(Math.pow(newLevel, 1.8) * 100);
-    }
-    await update(ref(db, `profiles/${user.uid}`), { exp: newExp, level: newLevel, updated_at: new Date().toISOString() });
-    return true;
-  }, [user, profile]);
+    const r = await addExpAndCoins(amount, 0);
+    return r ? true : null;
+  }, [addExpAndCoins]);
 
   const buyPremium = useCallback(async (days: number, cost: number) => {
     if (!user || !profile || profile.coins < cost) return false;
@@ -77,13 +101,14 @@ export function useProfile() {
   }, [user, profile]);
 
   const addCoins = useCallback(async (amount: number) => {
-    if (!user || !profile) return false;
-    await update(ref(db, `profiles/${user.uid}`), {
-      coins: profile.coins + amount,
-      updated_at: new Date().toISOString(),
+    if (!user) return false;
+    const profileRef = ref(db, `profiles/${user.uid}`);
+    const result = await runTransaction(profileRef, (current) => {
+      if (!current) return current;
+      return { ...current, coins: (current.coins || 0) + amount, updated_at: new Date().toISOString() };
     });
-    return true;
-  }, [user, profile]);
+    return result.committed;
+  }, [user]);
 
-  return { profile, loading, addExp, buyPremium, addCoins, fetchProfile };
+  return { profile, loading, addExp, addExpAndCoins, buyPremium, addCoins, fetchProfile };
 }
