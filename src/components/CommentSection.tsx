@@ -224,9 +224,7 @@ export function CommentSection({ contentId, contentType }: CommentSectionProps) 
           </div>
         </form>
       ) : (
-        <div className="text-center py-4 bg-muted/30 rounded-xl border border-border/50">
-          <p className="text-sm text-muted-foreground"><Link to="/login" className="text-primary font-medium">Masuk</Link> untuk berkomentar</p>
-        </div>
+        <LoginPrompt label="berkomentar" />
       )}
 
       <div className="space-y-3 max-h-[500px] overflow-y-auto">
