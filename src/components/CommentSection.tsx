@@ -32,7 +32,7 @@ interface CommentSectionProps {
 }
 
 export function CommentSection({ contentId, contentType }: CommentSectionProps) {
-  const { user } = useAuth();
+  const { user, openLoginModal } = useAuth();
   const { profile } = useProfile();
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
@@ -224,7 +224,15 @@ export function CommentSection({ contentId, contentType }: CommentSectionProps) 
           </div>
         </form>
       ) : (
-        <LoginPrompt label="berkomentar" />
+        <div className="text-center py-4 bg-muted/30 rounded-xl border border-border/50">
+          <p className="text-sm text-muted-foreground mb-2">Masuk untuk berkomentar</p>
+          <button
+            onClick={openLoginModal}
+            className="px-4 py-2 gradient-bg text-primary-foreground text-sm font-semibold rounded-lg hover:opacity-90 transition"
+          >
+            Masuk Sekarang
+          </button>
+        </div>
       )}
 
       <div className="space-y-3 max-h-[500px] overflow-y-auto">
