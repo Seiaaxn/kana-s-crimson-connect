@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Heart } from 'lucide-react';
 import { isFavorited, addFavorite, removeFavorite } from '@/lib/storage';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 
 interface FavoriteButtonProps {
   contentId: string;
@@ -13,8 +15,14 @@ interface FavoriteButtonProps {
 
 export function FavoriteButton({ contentId, type, title, poster, className }: FavoriteButtonProps) {
   const [favorited, setFavorited] = useState(() => isFavorited(contentId, type));
+  const { user, openLoginModal } = useAuth();
 
   const toggle = () => {
+    if (!user) {
+      toast.info('Masuk untuk menyimpan favorit');
+      openLoginModal();
+      return;
+    }
     if (favorited) {
       removeFavorite(contentId, type);
     } else {

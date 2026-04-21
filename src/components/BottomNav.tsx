@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, LayoutGrid, BookOpen, Tv, Heart, MessageSquare } from 'lucide-react';
+import { Home, LayoutGrid, BookOpen, Tv, Heart, MessageSquare, LogIn } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/useAuth';
 
 const navItems = [
   { href: '/', icon: Home, label: 'Beranda' },
@@ -13,6 +14,7 @@ const navItems = [
 
 export function BottomNav() {
   const { pathname } = useLocation();
+  const { user, openLoginModal } = useAuth();
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-lg border-t border-border/50 safe-area-pb">
@@ -33,6 +35,16 @@ export function BottomNav() {
             </Link>
           );
         })}
+        {!user && (
+          <button
+            onClick={openLoginModal}
+            className="flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl text-primary hover:text-primary/80 transition-all"
+            aria-label="Masuk"
+          >
+            <LogIn className="w-5 h-5" />
+            <span className="text-[10px] font-medium">Masuk</span>
+          </button>
+        )}
       </div>
     </nav>
   );

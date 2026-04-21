@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/hooks/useTheme";
+import { LoginModal } from "@/components/LoginModal";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AnimeDetail from "./pages/AnimeDetail";
@@ -48,6 +49,7 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
+          <LoginModal />
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
